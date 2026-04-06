@@ -169,7 +169,7 @@ public isolated distinct class Agent {
 
     private isolated function runInternal(@display {label: "Query"} string query,
             @display {label: "Session ID"} string sessionId = DEFAULT_SESSION_ID,
-            Context context = new, boolean withTrace = false) returns string|Trace|Error {
+            Context context = new, boolean withTrace = false) returns string|Trace|error {
         time:Utc startTime = time:utcNow();
         string executionId = uuid:createRandomUuid();
         log:printDebug("Agent execution started",
@@ -180,6 +180,8 @@ public isolated distinct class Agent {
         );
 
         observe:InvokeAgentSpan span = observe:createInvokeAgentSpan(self.systemPrompt.role);
+        int spanId = check span.getSpanId();
+        log:printInfo("Invoke span id:" + (check spanId).toString());
         span.addId(self.uniqueId);
         span.addSessionId(sessionId);
         span.addInput(query);
@@ -187,7 +189,7 @@ public isolated distinct class Agent {
         span.addSystemInstruction(systemPrompt);
 
         ExecutionTrace executionTrace = self.functionCallAgent
-            .run(query, systemPrompt, self.maxIter, self.verbose, sessionId, context, executionId);
+            .run(query, systemPrompt, self.maxIter, self.verbose, sessionId, context, executionId, parentSpanId = spanId);
         ChatUserMessage userMessage = {role: USER, content: query};
         Iteration[] iterations = executionTrace.iterations;
         FunctionCall[]? toolCalls = executionTrace.toolCalls.length() == 0 ? () : executionTrace.toolCalls;

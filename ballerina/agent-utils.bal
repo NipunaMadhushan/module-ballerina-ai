@@ -106,7 +106,7 @@ type BaseAgent distinct isolated object {
     isolated function selectNextTool(ExecutionProgress progress, string sessionId = DEFAULT_SESSION_ID) returns json|Error;
 
     isolated function run(string query, string instruction, int maxIter = 5, boolean verbose = true,
-            string sessionId = DEFAULT_SESSION_ID, Context context = new, string executionId = DEFAULT_EXECUTION_ID)
+            string sessionId = DEFAULT_SESSION_ID, Context context = new, string executionId = DEFAULT_EXECUTION_ID, int parentSpanId = -1)
             returns ExecutionTrace;
 };
 
@@ -119,6 +119,7 @@ class Executor {
     # Contains the current execution progress for the agent and the query
     public ExecutionProgress progress;
     private string? agentId = ();
+    private int parentSpanId = -1;
 
     # Initialize the executor with the agent and the query.
     #
@@ -126,10 +127,11 @@ class Executor {
     # + query - Natural language query to be executed by the agent
     # + history - Execution history of the agent (This is used to continue an execution paused without completing)
     # + context - Contextual information to be used by the tools during the execution
-    isolated function init(BaseAgent agent, string sessionId, *ExecutionProgress progress) {
+    isolated function init(BaseAgent agent, string sessionId, int parentSpanId = -1, *ExecutionProgress progress) {
         self.sessionId = sessionId;
         self.agent = agent;
         self.progress = progress;
+        self.parentSpanId = parentSpanId;
         Credential? agentCredential = agent.agentCredential;
         if agentCredential is Credential {
             self.agentId = agentCredential.id;
@@ -188,10 +190,11 @@ class Executor {
                 agentId = self.agentId,
                 executionId = self.progress.executionId,
                 sessionId = self.sessionId,
+                parentSpanId = self.parentSpanId,
                 toolName = toolName,
                 arguments = parsedOutput.arguments
             );
-            observe:ExecuteToolSpan span = observe:createExecuteToolSpan(toolName);
+            observe:ExecuteToolSpan span = observe:createExecuteToolSpan(toolName, self.parentSpanId);
             string? toolCallId = parsedOutput.id;
             if toolCallId is string {
                 span.addId(toolCallId);
@@ -344,7 +347,7 @@ class Executor {
 # + executionId - Unique identifier for this execution
 # + return - Returns the execution steps tracing the agent's reasoning and outputs from the tools
 isolated function run(BaseAgent agent, string instruction, string query, int maxIter, boolean verbose, string? agentId, 
-        string sessionId = DEFAULT_SESSION_ID, Context context = new, string executionId = DEFAULT_EXECUTION_ID)
+        string sessionId = DEFAULT_SESSION_ID, Context context = new, string executionId = DEFAULT_EXECUTION_ID, int parentSpanId = -1)
         returns ExecutionTrace {
     time:Utc startTime = time:utcNow();
     Iteration[] iterations = [];
@@ -385,7 +388,7 @@ isolated function run(BaseAgent agent, string instruction, string query, int max
     ChatUserMessage userMessage = {role: USER, content: query};
     history.push(userMessage);
 
-    Executor executor = new (agent, sessionId, progress = {instruction, query, context, executionId, history});
+    Executor executor = new (agent, sessionId, parentSpanId, progress = {instruction, query, context, executionId, history});
     ChatMessage[] temporaryMemory = [systemMessage, userMessage];
     ChatAssistantMessage? finalAssistantMessage = ();
     int iter = 0;

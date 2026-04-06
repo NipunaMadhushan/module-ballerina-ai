@@ -86,10 +86,14 @@ public isolated distinct class ChatSpan {
     *LlmSpan;
     private final BaseSpanImp baseSpan;
 
-    isolated function init(string modelName) {
-        self.baseSpan = new (string `${CHAT} ${modelName}`);
+    isolated function init(string modelName, int parentSpanId = -1) {
+        self.baseSpan = new (string `${CHAT} ${modelName}`, parentSpanId);
         self.addTag(OPERATION_NAME, CHAT);
         self.addTag(REQUEST_MODEL, modelName);
+    }
+
+    public isolated function getSpanId() returns int|error {
+        return self.baseSpan.getSpanId();
     }
 
     # Records the provider name used for the request.

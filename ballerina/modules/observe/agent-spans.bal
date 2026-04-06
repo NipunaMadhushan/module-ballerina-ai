@@ -23,11 +23,16 @@ public isolated distinct class CreateAgentSpan {
     # Initializes a new agent creation span for the given agent name.
     # 
     # + agentName - The name of the agent being created
-    isolated function init(string agentName) {
-        self.baseSpan = new (string `${CREATE_AGENT} ${agentName}`);
+    # + parentSpanId - The ID of the parent span, if any
+    isolated function init(string agentName, int parentSpanId = -1) {
+        self.baseSpan = new (string `${CREATE_AGENT} ${agentName}`, parentSpanId);
         self.addTag(OPERATION_NAME, CREATE_AGENT);
         self.addTag(PROVIDER_NAME, "Ballerina");
         self.addTag(AGENT_NAME, agentName);
+    }
+
+    public isolated function getSpanId() returns int|error {
+        return self.baseSpan.getSpanId();
     }
 
     # Records the agent ID assigned after creation.
@@ -73,11 +78,16 @@ public isolated distinct class InvokeAgentSpan {
     # Initializes a new agent invocation span for the given agent name.
     # 
     # + agentName - The name of the agent being invoked
-    isolated function init(string agentName) {
-        self.baseSpan = new (string `${INVOKE_AGENT} ${agentName}`);
+    # + parentSpanId - The ID of the parent span, if any
+    isolated function init(string agentName, int parentSpanId = -1) {
+        self.baseSpan = new (string `${INVOKE_AGENT} ${agentName}`, parentSpanId);
         self.addTag(OPERATION_NAME, INVOKE_AGENT);
         self.addTag(PROVIDER_NAME, "Ballerina");
         self.addTag(AGENT_NAME, agentName);
+    }
+
+    public isolated function getSpanId() returns int|error {
+        return self.baseSpan.getSpanId();
     }
 
     # Records the agent ID of the invocation.
@@ -138,10 +148,15 @@ public isolated distinct class ExecuteToolSpan {
     # Initializes a new tool execution span for the given tool name.
     # 
     # + toolName - The name of the tool being executed
-    isolated function init(string toolName) {
-        self.baseSpan = new (string `${EXECUTE_TOOL} ${toolName}`);
+    # + parentSpanId - The ID of the parent span, if any
+    isolated function init(string toolName, int parentSpanId = -1) {
+        self.baseSpan = new (string `${EXECUTE_TOOL} ${toolName}`, parentSpanId);
         self.addTag(OPERATION_NAME, EXECUTE_TOOL);
         self.addTag(TOOL_NAME, toolName);
+    }
+
+    public isolated function getSpanId() returns int|error {
+        return self.baseSpan.getSpanId();
     }
 
     # Records the tool call ID of the execution.

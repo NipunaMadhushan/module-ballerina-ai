@@ -38,9 +38,10 @@ public isolated function createInvokeAgentSpan(string agentName) returns InvokeA
 # Creates a span representing the execution of an AI tool.
 #
 # + toolName - The name of the tool being executed
+# + parentSpanId - The ID of the parent span
 # + return - An `ExecuteToolSpan` instance representing the span
-public isolated function createExecuteToolSpan(string toolName) returns ExecuteToolSpan {
-    ExecuteToolSpan span = new (toolName);
+public isolated function createExecuteToolSpan(string toolName, int parentSpanId) returns ExecuteToolSpan {
+    ExecuteToolSpan span = new (toolName, parentSpanId);
     recordAiSpan(span);
     return span;
 }

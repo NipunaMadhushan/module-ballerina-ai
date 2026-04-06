@@ -141,11 +141,11 @@ isolated distinct class FunctionCallAgent {
     # + executionId - Unique identifier for this execution
     # + return - Returns the execution steps tracing the agent's reasoning and outputs from the tools
     isolated function run(string query, string instruction, int maxIter = 5, boolean verbose = true,
-            string sessionId = DEFAULT_SESSION_ID, Context context = new, string executionId = DEFAULT_EXECUTION_ID)
+            string sessionId = DEFAULT_SESSION_ID, Context context = new, string executionId = DEFAULT_EXECUTION_ID, int parentSpanId = -1)
             returns ExecutionTrace {
         Credential? & readonly agentConfig = self.agentCredential;
         string? agentId = agentConfig is Credential ? agentConfig.id : ();
-        return run(self, instruction, query, maxIter, verbose, agentId, sessionId, context, executionId);
+        return run(self, instruction, query, maxIter, verbose, agentId, sessionId, context, executionId, parentSpanId);
     }
 }
 

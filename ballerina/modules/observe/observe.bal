@@ -156,18 +156,22 @@ isolated class BaseSpanImp {
     # If tracing is disabled or span creation fails, the span is not recorded.
     #
     # + name - The name of the span to be created
-    isolated function init(string name) {
+    isolated function init(string name, int parentSpanId = -1) {
         if !observe:isTracingEnabled() {
             return;
         }
 
-        int|error spanId = observe:startSpan(name);
+        int|error spanId = observe:startSpan(name, parentSpanId = parentSpanId);
         self.spanId = spanId;
         if spanId is error {
             log:printError("failed to start span", 'error = spanId);
             return;
         }
         addOtherTags("span.type", "ai", spanId);
+    }
+
+    public isolated function getSpanId() returns int|error {
+        return self.spanId;
     }
 
     # Adds a tag to the current AI span.
